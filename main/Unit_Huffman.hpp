@@ -1,18 +1,18 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <queue>
-#include <string>
-#include <bitset>
-#include <thread>
-#include <mutex>
-
+#include <iostream> // For cout, cerr
+#include <fstream>  // For file I/O (ifstream, ofstream, fstream)
+#include <vector>   // For dynamic arrays (used to hold nodes)
+#include <queue>    // For priority_queue (used in Huffman Tree)
+#include <string>   // For string
+#include <bitset>   // For binary <-> decimal conversion
+#include <thread>   // (Unused here but included for future concurrency)
+#include <mutex>    // (Unused here but good for thread-safe access)
+using namespace std;
 class Node
 {
 public:
     char value;
     unsigned freq;
-    std::string codeWord;
+    string codeWord;
     Node *left, *right;
 
     Node() : left(nullptr), right(nullptr) {}
@@ -28,31 +28,31 @@ struct comp
     }
 };
 
-int BinaryToDec(const std::string &bin)
+int BinaryToDec(const string &bin)
 {
-    std::bitset<8> bit(bin);
+    bitset<8> bit(bin);
     int ans = bit.to_ulong();
     return ans;
 }
 
-std::string DeToBinary(int dec)
+string DeToBinary(int dec)
 {
-    std::bitset<8> bit(dec);
-    std::string ans = bit.to_string();
+    bitset<8> bit(dec);
+    string ans = bit.to_string();
     return ans;
 }
 
 class Huffman
 {
 private:
-    std::vector<Node *> Vec_Node;
-    std::string SourceFileName, DestFilename;
-    std::fstream Source, Dest;
+    vector<Node *> Vec_Node;
+    string SourceFileName, DestFilename;
+    fstream Source, Dest;
     Node *root;
-    std::priority_queue<Node *, std::vector<Node *>, comp> pq;
+    priority_queue<Node *, vector<Node *>, comp> pq;
 
 public:
-    Huffman(const std::string &s, const std::string &d) : SourceFileName(s), DestFilename(d), root(nullptr)
+    Huffman(const string &s, const string &d) : SourceFileName(s), DestFilename(d), root(nullptr)
     {
         for (int i = 0; i < 256; ++i)
         {
@@ -62,7 +62,7 @@ public:
         }
     }
 
-    void make_codeword(Node *root, std::string code)
+    void make_codeword(Node *root, string code)
     {
         if (!root->left && !root->right)
         {
@@ -75,10 +75,10 @@ public:
 
     void Build_Huffman_Tree()
     {
-        Source.open(SourceFileName, std::ios::in | std::ios::binary);
+        Source.open(SourceFileName, ios::in | ios::binary);
         if (!Source.is_open())
         {
-            std::cerr << "Failed to open the source file." << std::endl;
+            cerr << "Failed to open the source file." << endl;
             return;
         }
 
@@ -98,7 +98,7 @@ public:
             }
         }
 
-        std::priority_queue<Node *, std::vector<Node *>, comp> temp(pq);
+        priority_queue<Node *, vector<Node *>, comp> temp(pq);
         while (temp.size() > 1)
         {
             Node *l = temp.top();
@@ -116,24 +116,24 @@ public:
 
     void Write_Encoded_code()
     {
-        Source.open(SourceFileName, std::ios::in | std::ios::binary);
-        Dest.open(DestFilename, std::ios::out | std::ios::binary);
+        Source.open(SourceFileName, ios::in | ios::binary);
+        Dest.open(DestFilename, ios::out | ios::binary);
         if (!Source.is_open())
         {
-            std::cerr << "Error opening source file." << std::endl;
+            cerr << "Error opening source file." << endl;
             return;
         }
         if (!Dest.is_open())
         {
-            std::cerr << "Error opening destination file." << std::endl;
+            cerr << "Error opening destination file." << endl;
             return;
         }
 
-        std::string decoded_code;
-        std::string s;
+        string decoded_code;
+        string s;
 
         decoded_code += char(pq.size());
-        std::priority_queue<Node *, std::vector<Node *>, comp> temp_pq(pq);
+        priority_queue<Node *, vector<Node *>, comp> temp_pq(pq);
 
         while (!temp_pq.empty())
         {
@@ -182,16 +182,16 @@ public:
 
     void Get_Huffman_Tree()
     {
-        Source.open(SourceFileName, std::ios::in | std::ios::binary);
+        Source.open(SourceFileName, ios::in | ios::binary);
         if (!Source.is_open())
         {
-            std::cerr << "Failed to open the source file." << std::endl;
+            cerr << "Failed to open the source file." << endl;
             return;
         }
         if (Source.eof())
         {
 
-            std::cerr << "This File is empty." << std::endl;
+            cerr << "This File is empty." << endl;
             return;
         }
 
@@ -207,7 +207,7 @@ public:
 
             Source.read(reinterpret_cast<char *>(&codewordLen), 16);
 
-            std::string codestr = "";
+            string codestr = "";
             for (int i = 0; i < 16; i++)
             {
                 codestr += (DeToBinary(codewordLen[i]));
@@ -248,29 +248,29 @@ public:
 
     void Write_Decoded_Data()
     {
-        Source.open(SourceFileName, std::ios::in | std::ios::binary);
+        Source.open(SourceFileName, ios::in | ios::binary);
         if (!Source.is_open())
         {
-            std::cerr << "Failed to open the source file." << std::endl;
+            cerr << "Failed to open the source file." << endl;
             return;
         }
-        Dest.open(DestFilename, std::ios::out);
+        Dest.open(DestFilename, ios::out);
         if (!Dest.is_open())
         {
-            std::cerr << "Failed to open the destination file." << std::endl;
+            cerr << "Failed to open the destination file." << endl;
             return;
         }
 
         unsigned char treeSize;
         Source.read(reinterpret_cast<char *>(&treeSize), 1);
 
-        Source.seekg(-1, std::ios::end);
+        Source.seekg(-1, ios::end);
         char padding;
         Source.read((&padding), 1);
 
-        Source.seekg(1 + 17 * treeSize, std::ios::beg);
+        Source.seekg(1 + 17 * treeSize, ios::beg);
 
-        std::string encoded_data = "";
+        string encoded_data = "";
         unsigned char c;
         Source.read(reinterpret_cast<char *>(&c), 1);
         while (!Source.eof())
@@ -280,7 +280,7 @@ public:
         }
 
         Node *node = root;
-        std::string path = "";
+        string path = "";
         for (size_t i = 0; i <= encoded_data.size() - 2; ++i)
         {
             path = DeToBinary(encoded_data[i]);

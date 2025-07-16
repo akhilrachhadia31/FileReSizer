@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
-#include <ctime>
-#include <unistd.h>
-#include "Unit_Huffman.hpp"
+#include <ctime>            // For measuring execution time (clock)
+#include <unistd.h>         // For sleep on Unix/Linux
+#include "Unit_Huffman.hpp" // Your custom Huffman class
 
 using namespace std;
 
@@ -16,7 +16,7 @@ int main()
     const string BOLD = "\033[1m";
     const string RESET = "\033[0m";
 
-    do
+    while (true)
     {
         int choice;
         cout << endl;
@@ -32,7 +32,15 @@ int main()
         cout << PINK << "--> Enter " << BOLD << 2 << RESET << PINK << " for Decompressing a file." << RESET << endl;
         cout << BLUE << "--> Enter " << BOLD << 3 << RESET << BLUE << " for Exiting." << RESET << endl;
 
-        cin >> choice;
+        cout << CYAN << "Enter your choice: " << RESET;
+        if (!(cin >> choice))
+        {
+            cout << RED << "Invalid input. Please enter a number." << RESET << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
         cout << endl;
 
         if (choice == 1)
@@ -42,10 +50,9 @@ int main()
                  << RESET << " --------------------------------------------------"
                  << endl;
 
-            string Source_file_name;
+            string Source_file_name, Destination_file_name;
             cout << "Enter the source file name to be compressed: ";
             cin >> Source_file_name;
-            string Destination_file_name;
             cout << "Enter the destination file name to save compressed file: ";
             cin >> Destination_file_name;
 
@@ -55,12 +62,28 @@ int main()
                 continue;
             }
 
-            clock_t tStart = clock();
             ifstream f1(Source_file_name, ios::binary | ios::ate);
-            int before = f1.tellg();
+            if (!f1.is_open())
+            {
+                cout << RED << "Error: Could not open source file: " << Source_file_name << RESET << endl;
+                continue;
+            }
 
-            Huffman f(Source_file_name, Destination_file_name);
-            f.compression();
+            streampos before = f1.tellg();
+            f1.close();
+
+            clock_t tStart = clock();
+
+            try
+            {
+                Huffman f(Source_file_name, Destination_file_name);
+                f.compression();
+            }
+            catch (const exception &e)
+            {
+                cout << RED << "Compression failed: " << e.what() << RESET << endl;
+                continue;
+            }
 
             cout << endl;
             cout << "Compressed Successfully to file: " << YELLOW << Destination_file_name << RESET << endl;
@@ -69,14 +92,28 @@ int main()
             sleep(1);
 
             ifstream f2(Destination_file_name, ios::binary | ios::ate);
-            int after = f2.tellg();
+            if (!f2.is_open())
+            {
+                cout << RED << "Error: Could not open destination file to calculate size." << RESET << endl;
+                continue;
+            }
+
+            streampos after = f2.tellg();
+            f2.close();
 
             cout << "File Size Before Compressing: " << YELLOW << before << RESET << " Bytes" << endl;
             cout << "File Size After Compressing: " << YELLOW << after << RESET << " Bytes" << endl;
 
-            double compression_Percentage = (double)after * 100 / before;
-            cout << "The size of compressed file is " << YELLOW << fixed << setprecision(2)
-                 << compression_Percentage << "%" << RESET << " of the original file." << endl;
+            if (before > 0)
+            {
+                double compression_Percentage = static_cast<double>(after) * 100.0 / static_cast<double>(before);
+                cout << "The size of compressed file is " << YELLOW << fixed << setprecision(2)
+                     << compression_Percentage << "%" << RESET << " of the original file." << endl;
+            }
+            else
+            {
+                cout << RED << "Warning: Original file size was 0 bytes. Cannot compute compression ratio." << RESET << endl;
+            }
         }
         else if (choice == 2)
         {
@@ -84,11 +121,9 @@ int main()
                  << RED << "Huffman Algorithm"
                  << RESET << " ------------------------------------------------"
                  << endl;
-
-            string Source_file_name;
+            string Source_file_name, Destination_file_name;
             cout << "Enter the compressed source file name: ";
             cin >> Source_file_name;
-            string Destination_file_name;
             cout << "Enter the destination file name to save decompressed data: ";
             cin >> Destination_file_name;
 
@@ -98,13 +133,36 @@ int main()
                 continue;
             }
 
+            ifstream f1(Source_file_name, ios::binary);
+            if (!f1.is_open())
+            {
+                cout << RED << "Error: Could not open compressed source file: " << Source_file_name << RESET << endl;
+                continue;
+            }
+            f1.close();
+
             clock_t tStart = clock();
 
-            Huffman f(Source_file_name, Destination_file_name);
-            f.decompression();
+            try
+            {
+                Huffman f(Source_file_name, Destination_file_name);
+                f.decompression();
+            }
+            catch (const exception &e)
+            {
+                cout << RED << "Decompression failed: " << e.what() << RESET << endl;
+                continue;
+            }
 
-            ifstream f1(Destination_file_name, ios::binary | ios::ate);
-            int after = f1.tellg();
+            ifstream f2(Destination_file_name, ios::binary | ios::ate);
+            if (!f2.is_open())
+            {
+                cout << RED << "Error: Could not open destination file to calculate size." << RESET << endl;
+                continue;
+            }
+
+            streampos after = f2.tellg();
+            f2.close();
 
             cout << endl;
             cout << "File Size After Decompressing: " << YELLOW << after << RESET << " Bytes" << endl;
@@ -116,14 +174,13 @@ int main()
         else if (choice == 3)
         {
             cout << CYAN << "Thank You! Have A Nice Day." << RESET << endl;
-            exit(0);
+            break;
         }
         else
         {
-            cout << RED << "Invalid choice. Please try again." << RESET << endl;
+            cout << RED << "Invalid choice. Please try again (1, 2 or 3)." << RESET << endl;
         }
-
-    } while (1);
+    }
 
     return 0;
 }
